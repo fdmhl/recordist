@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@faddys/command": "^5.3.0",
+    "@faddys/scenarist": "^4.1.3"
+  }
+}
