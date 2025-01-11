@@ -39,11 +39,9 @@ print iTempo
 
 endin
 
-gkClock init 0
-
 alwayson "keyboard"
 
-instr beat
+instr sampler
 
 iInstance instance
 p1 init int ( p1 ) + iInstance
@@ -56,13 +54,9 @@ iSwing init p7
 
 kBar chnget "bar"
 kSwing random 0, 1
-gkClock metro 1 / kBar
+kClock metro 1 / kBar
 
-if gkClock == 1 then
-
-schedulek "arpeggiator", iStep * kBar, 1, "arpeggiator"
-
-if kSwing > iSwing then
+if kClock == 1 && kSwing > iSwing then
 
 kSample random 1, iSize
 SSample sprintfk "%s.%d.wav", SKit, int ( kSample )
@@ -70,8 +64,6 @@ SSample sprintfk "%s.%d.wav", SKit, int ( kSample )
 kBar chnget "bar"
 
 schedulek iNote + frac ( p1 ), iStep * kBar, kBar, SSample, SKit
-
-endif
 
 endif
 
@@ -164,6 +156,25 @@ iInstance instance
 p1 init int ( p1 ) + iInstance
 
 SChannel strget p4
+iStep init p5
+
+kBar chnget "bar"
+kClock metro 1/kBar
+
+if kClock == 1 then
+
+schedulek "pluck", iStep * kBar, 1, SChannel
+
+endif
+
+endin
+
+instr pluck
+
+iInstance instance
+p1 init int ( p1 ) + iInstance
+
+SChannel strget p4
 
 SLeft strcat SChannel, "/left"
 SRight strcat SChannel, "/right"
@@ -183,13 +194,12 @@ endif
 
 iAttack init 1/128
 iDecay init 1/32
-iSustain init 1/64
+iSustain init 1/8
 iRelease init p3 - iAttack - iDecay
 
 aAmplitude adsr iAttack, iDecay, iSustain, iRelease
 
 iKey chnget "key"
-;iKey += 12
 iNote random -7, 19
 iNote init int ( iNote )
 
@@ -199,11 +209,7 @@ iPitch init iNote + 12
 
 else
 
-iPitch init iNote
-
-if iNote > 12 then
-
-endif
+iPitch init iNote % 12
 
 endif
 
@@ -423,21 +429,19 @@ chnset iKey + .5, "key"
 
 endin
 
-#define clear #schedule "clear", 0, -1,#
 #define mix #schedule "mix", 0, -1,#
 #define reverb #schedule "reverb", 0, -1,#
 #define output #schedule "output", 0, -1,#
-#define drone #schedule "drone", 0, -1, "drone", 4,#
 
-$output "output"
+$output "output", 1
 
 $mix "drone", "drone-reverb"
 $reverb "drone-reverb", "drone-final"
-$mix "drone-final", "output", 3
+$mix "drone-final", "output", 2
 
-$mix "arpeggiator", "arpeggiator-reverb", 1
-$reverb "arpeggiator-reverb", "arpeggiator-final", 4
-$mix "arpeggiator-final", "output", 0
+$mix "arpeggiator", "arpeggiator-reverb", 0
+$reverb "arpeggiator-reverb", "arpeggiator-final", 8
+$mix "arpeggiator-final", "output", 2
 
 $mix "dom", "output"
 $mix "tak", "output"
@@ -445,17 +449,42 @@ $mix "sak", "output", 1
 $mix "sagat", "output", 2
 $mix "claps", "output"
 
-#define dom #schedule "beat", 0, -1, "dom", 24,#
-#define tak #schedule "beat", 0, -1, "tak", 24,#
-#define sak #schedule "beat", 0, -1, "sak", 24,#
-#define sagat #schedule "beat", 0, -1, "sagat", 24,#
-#define claps #schedule "beat", 0, -1, "claps", 4,#
+#define drone #schedule "drone", 0, -1, "drone", 4,#
+#define arpeggiator #schedule "arpeggiator", 0, -1, "arpeggiator",#
+#define dom #schedule "sampler", 0, -1, "dom", 24,#
+#define tak #schedule "sampler", 0, -1, "tak", 24,#
+#define sak #schedule "sampler", 0, -1, "sak", 24,#
+#define sagat #schedule "sampler", 0, -1, "sagat", 24,#
+#define claps #schedule "sampler", 0, -1, "claps", 4,#
 
 $drone 0
 $drone -12, 8
 $drone 12, 8
 $drone 3, 8
 $drone 8, 8
+
+iNote init 0
+iChord init 3
+
+while iNote < iChord do
+
+$arpeggiator 0/8
+
+$arpeggiator 1/8
+$arpeggiator 1.5/8
+
+$arpeggiator 3/8
+$arpeggiator 2.5/8
+
+$arpeggiator 4/8
+
+$arpeggiator 5/8
+$arpeggiator 5.5/8
+$arpeggiator 6/8
+
+iNote += 1
+
+od
 
 $dom 0
 $sak 1/8, 1/2
@@ -491,3 +520,16 @@ chnset 8, "note/8"
 chnset 8, "note/9"
 chnset 11.25, "note/10"
 chnset 11.25, "note/11"
+
+chnset 0, "note/0"
+chnset 2, "note/1"
+chnset 2, "note/2"
+chnset 4, "note/3"
+chnset 4, "note/4"
+chnset 5, "note/5"
+chnset 7, "note/6"
+chnset 7, "note/7"
+chnset 9, "note/8"
+chnset 9, "note/9"
+chnset 11, "note/10"
+chnset 11, "note/11"

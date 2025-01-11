@@ -1,0 +1,24 @@
+instr maqam_HijazAscendingTurkish
+
+; 1: E 4
+chnset 0, "note/0"
+
+; 2: F+25 5.25
+chnset 1.25, "note/1"
+
+; 3: G sharp 7.5
+chnset 3.5, "note/2"
+
+; 4: A 9
+chnset 5, "note/3"
+
+;5: B 11
+chnset 7, "note/4"
+
+; 6: C sharp 12.5
+chnset 8.5, "note/5"
+
+; 7: D 14
+chnset 10, "note/6"
+
+endin

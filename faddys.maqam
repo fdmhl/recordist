@@ -1,0 +1,11 @@
+instr maqam_Faddys
+
+chnset 0, "note/0"
+chnset 2.25, "note/1"
+chnset 3, "note/2"
+chnset 5, "note/3"
+chnset 7.25, "note/4"
+chnset 8, "note/5"
+chnset 11.25, "note/6"
+
+endin

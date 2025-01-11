@@ -1,0 +1,24 @@
+instr maqam_HijazModernArabic
+
+; 1: E 4
+chnset 0, "note/0"
+
+; 2: F sharp 6
+chnset 2, "note/1"
+
+; 3: G sharp 8
+chnset 4, "note/2"
+
+; 4: A 9
+chnset 5, "note/3"
+
+; 5: B 11
+chnset 7, "note/4"
+
+; 6: C 12
+chnset 8, "note/5"
+
+; 7: D 14
+chnset 10, "note/6"
+
+endin

@@ -1,0 +1,26 @@
+instr maqam_Saba
+
+; 1: E 4
+chnset 0, "note/0"
+
+; 2: F sharp  -25 5.75
+chnset 1.75, "note/1"
+
+; 3: G 7
+chnset 3, "note/2"
+
+; 4: A sharp 10
+chnset 6, "note/3"
+
+; 5: B 11
+chnset 7, "note/4"
+
+; 6: C 12
+chnset 8, "note/5"
+
+; 7: D 14
+chnset 10, "note/6"
+
+; 8: E flat
+
+endin
