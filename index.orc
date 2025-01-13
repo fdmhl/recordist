@@ -1,10 +1,7 @@
 sr = 48000
-ksmps = 32
+ksmps = 16
 nchnls = 2
 0dbfs = 1
-
-chnset 90, "tempo"
-chnset 4, "measure"
 
 opcode instance, i, 0
 
@@ -26,20 +23,31 @@ xout iInstance
 
 endop
 
-schedule "refresh", 0, 0
+alwayson "clock"
 
-instr refresh
+chnset 90, "tempo"
+chnset 4, "measure"
 
-iTempo chnget "tempo"
-iMeasure chnget "measure"
+instr clock
 
-chnset iMeasure * 60 / iTempo, "bar"
+kTempo chnget "tempo"
+kMeasure chnget "measure"
 
-print iTempo
+chnset kMeasure * 60 / kTempo, "bar"
+
+kBeat metro kTempo/60
+
+chnset kBeat, "beat"
+
+if kBeat == 1 then
+
+kClock chnget "clock"
+
+chnset kClock + 1, "clock"
+
+endif
 
 endin
-
-alwayson "keyboard"
 
 instr sampler
 
@@ -52,24 +60,27 @@ iSize init p5
 iStep init p6
 iSwing init p7
 
-kBar chnget "bar"
 kSwing random 0, 1
-kClock metro 1 / kBar
 
-if kClock == 1 && kSwing > iSwing then
+kClock chnget "clock"
+kMeasure chnget "measure"
+kBeat chnget "beat"
+kTempo chnget "tempo"
+
+if kBeat == 1 && kClock % kMeasure == int ( iStep ) && kSwing > iSwing then
 
 kSample random 1, iSize
 SSample sprintfk "%s.%d.wav", SKit, int ( kSample )
 
-kBar chnget "bar"
-
-schedulek iNote + frac ( p1 ), iStep * kBar, kBar, SSample, SKit
+schedulek iNote + iInstance, frac ( iStep ) * 60 / kTempo, 1, SSample, SKit, kClock
 
 endif
 
 endin
 
 instr sample
+
+print p6
 
 SSample strget p4
 SChannel strget p5
@@ -87,6 +98,8 @@ chnmix aNote [ 0 ], SRight
 endin
 
 chnset 60, "key"
+
+giDrone ftgen 0, 0, 256, 10, 1
 
 instr drone
 
@@ -118,17 +131,17 @@ kBar chnget "bar"
 
 iDistance += 1 + iPartials * 64
 
-aModulator poscil .25, 1/kBar
-aModulator += .35
-
-aAmplitude jspline .5, 0, kBar
-aAmplitude = ( aAmplitude + .5 ) / iDistance
-aAmplitude *= aModulator
-
 aDetune jspline 1, 0, kBar
 aFrequency poscil kFrequency, kFrequency * cent ( aDetune * 5 )
 
-aNote poscil aAmplitude, aFrequency
+kModulator jspline .5, 0, kBar
+kModulator += .5
+
+aAmplitude jspline .5, 0, kBar
+aAmplitude = ( aAmplitude + .5 ) / iDistance
+aAmplitude *= kModulator
+
+aNote foscil aAmplitude, kFrequency, 1, 1, kModulator, giDrone
 
 chnmix aNote, SLeft
 chnmix aNote, SRight
@@ -141,7 +154,13 @@ aSkew += .5
 
 aNote squinewave aFrequency, aClip, aSkew
 
-aNote butterlp aNote, kFrequency/2
+aFilter jspline 1, 0, kBar
+aFilter += 1
+
+iFilter init 8
+
+aNote butterlp aNote, cent ( aFilter * 1200 ) * kFrequency * iFilter
+aNote butterhp aNote, cent ( aFilter * 1200 ) * kFrequency / iFilter
 
 aNote *= aAmplitude/8
 
@@ -158,12 +177,14 @@ p1 init int ( p1 ) + iInstance
 SChannel strget p4
 iStep init p5
 
-kBar chnget "bar"
-kClock metro 1/kBar
+kTempo chnget "tempo"
+kBeat chnget "beat"
+kMeasure chnget "measure"
+kClock chnget "clock"
 
-if kClock == 1 then
+if kBeat == 1 && kClock % kMeasure == int ( iStep ) then
 
-schedulek "pluck", iStep * kBar, 1, SChannel
+schedulek "pluck", frac ( iStep ) * 60 / kTempo, 1, SChannel
 
 endif
 
@@ -180,7 +201,7 @@ SLeft strcat SChannel, "/left"
 SRight strcat SChannel, "/right"
 
 iBar chnget "bar"
-iRhythm random 2, 6
+iRhythm random 4, 6
 
 if iRhythm < 0 then
 
@@ -192,45 +213,35 @@ p3 init iBar / 2 ^ int ( iRhythm )
 
 endif
 
-iAttack init 1/128
-iDecay init 1/32
-iSustain init 1/8
-iRelease init p3 - iAttack - iDecay
+iAttack init p3/64
+iDecay init p3/4
+iSustain init 1/64
+iRelease init p3/8
 
-aAmplitude adsr iAttack, iDecay, iSustain, iRelease
+aAmplitude madsr iAttack, iDecay, iSustain, iRelease
 
 iKey chnget "key"
-iNote random -7, 19
+
+iNote random 0, 6
 iNote init int ( iNote )
 
-if iNote < 0 then
-
-iPitch init iNote + 12
-
-else
-
-iPitch init iNote % 12
-
-endif
-
-SNote sprintf "note/%d", iPitch
+SNote sprintf "note/%d", iNote
 iDetune chnget SNote
 
-if iNote < 0 then
+prints "%s\n", SNote
 
-iDetune -= 12
+iOctave random -1, 0
+iOctave init 1; int ( iOctave ) * 12
 
-elseif iNote >= 12 then
+iKey += iDetune + iOctave
 
-iDetune += 12
-
-endif
-
-iKey += int ( iDetune )
+print iNote
+print iDetune
+print iKey
 
 iShift init 64
 
-aFrequency linseg cpsmidinn ( iKey ), iAttack / iShift, cpsmidinn ( iKey + 12 ), iDecay / iShift, cpsmidinn ( iKey ), iRelease * iShift, cpsmidinn ( iKey - .25 )
+aFrequency linsegr cpsmidinn ( iKey + 12 ), iAttack / iShift, cpsmidinn ( iKey ), iRelease, cpsmidinn ( iKey - .25 )
 
 aClip jspline .5, 0, iBar
 aClip += .5
@@ -241,23 +252,8 @@ aSkew += .5
 aNote squinewave aFrequency, aClip, aSkew
 aNote *= aAmplitude
 
-aNote butterlp aNote, aFrequency
-
-chnmix aNote, SLeft
-chnmix aNote, SRight
-
-aNote squinewave aFrequency/2, aClip, aSkew
-aNote *= aAmplitude/8
-
-aNote butterlp aNote, aFrequency
-
-chnmix aNote, SLeft
-chnmix aNote, SRight
-
-aNote squinewave aFrequency*2, aClip, aSkew
-aNote *= aAmplitude/2
-
-aNote butterlp aNote, aFrequency
+aNote butterlp aNote, aFrequency * 4
+aNote butterhp aNote, aFrequency / 1
 
 chnmix aNote, SLeft
 chnmix aNote, SRight
@@ -383,6 +379,8 @@ chnclear SInputRight
 
 endin
 
+alwayson "keyboard"
+
 instr keyboard
 
 kKey, kPressed sense
@@ -397,21 +395,23 @@ endif
 
 endin
 
+chnset .5, "tempo-shift"
+
 instr a
 
 iTempo chnget "tempo"
-chnset iTempo - 5, "tempo"
+iShift chnget "tempo-shift"
 
-schedule "refresh", 0, 0
+chnset iTempo - iShift, "tempo"
 
 endin
 
 instr d
 
 iTempo chnget "tempo"
-chnset iTempo + 5, "tempo"
+iShift chnget "tempo-shift"
 
-schedule "refresh", 0, 0
+chnset iTempo + iShift, "tempo"
 
 endin
 
@@ -429,107 +429,141 @@ chnset iKey + .5, "key"
 
 endin
 
+chnset 1, "maqam/index"
+
+opcode maqam, 0, i
+
+iShift xin
+
+iIndex chnget "maqam/index"
+iCount chnget "maqam/count"
+
+iIndex += iShift
+
+if iIndex < 0 then
+
+iIndex init 0
+
+elseif iIndex >= iCount then
+
+iIndex init iCount - 1
+
+endif
+
+SIndex sprintf "maqam/%d", iIndex
+
+SMaqam chnget SIndex
+
+schedule SMaqam, 0, 0
+
+chnset iIndex, "maqam/index"
+
+endop
+
+instr z
+
+maqam -1
+
+endin
+
+instr c
+
+maqam 1
+
+endin
+
 #define mix #schedule "mix", 0, -1,#
 #define reverb #schedule "reverb", 0, -1,#
 #define output #schedule "output", 0, -1,#
 
-$output "output", 1
+$output "output", 0
 
 $mix "drone", "drone-reverb"
 $reverb "drone-reverb", "drone-final"
-$mix "drone-final", "output", 2
+$mix "drone-final", "output", 8
 
-$mix "arpeggiator", "arpeggiator-reverb", 0
-$reverb "arpeggiator-reverb", "arpeggiator-final", 8
-$mix "arpeggiator-final", "output", 2
+$mix "arpeggiator", "arpeggiator/reverb"
+$reverb "arpeggiator/reverb", "arpeggiator/final", 2
+$mix "arpeggiator/final", "output", 2
 
-$mix "dom", "output"
-$mix "tak", "output"
-$mix "sak", "output", 1
-$mix "sagat", "output", 2
-$mix "claps", "output"
+$mix "dom", "percussion"
+$mix "dem", "percussion"
+$mix "tak", "percussion"
+$mix "sak", "percussion", 1
+$mix "sagat", "percussion", 2
+$mix "claps", "percussion"
 
-#define drone #schedule "drone", 0, -1, "drone", 4,#
+$mix "percussion", "output", 1
+
+#define drone #schedule "drone", 0, -1, "drone", 0,#
 #define arpeggiator #schedule "arpeggiator", 0, -1, "arpeggiator",#
+
 #define dom #schedule "sampler", 0, -1, "dom", 24,#
+#define dem #schedule "sampler", 0, -1, "dem", 24,#
+
 #define tak #schedule "sampler", 0, -1, "tak", 24,#
 #define sak #schedule "sampler", 0, -1, "sak", 24,#
 #define sagat #schedule "sampler", 0, -1, "sagat", 24,#
 #define claps #schedule "sampler", 0, -1, "claps", 4,#
 
 $drone 0
-$drone -12, 8
-$drone 12, 8
-$drone 3, 8
-$drone 8, 8
 
 iNote init 0
-iChord init 3
+iChord init 1
 
 while iNote < iChord do
 
-$arpeggiator 0/8
+$arpeggiator 0
 
-$arpeggiator 1/8
-$arpeggiator 1.5/8
+$arpeggiator .5
+$arpeggiator .75
 
-$arpeggiator 3/8
-$arpeggiator 2.5/8
+$arpeggiator 1.25
+$arpeggiator 1.5
 
-$arpeggiator 4/8
+$arpeggiator 2
 
-$arpeggiator 5/8
-$arpeggiator 5.5/8
-$arpeggiator 6/8
+$arpeggiator 2.5
+$arpeggiator 2.75
+$arpeggiator 3
 
 iNote += 1
 
 od
 
 $dom 0
-$sak 1/8, 1/2
-$tak 1.5/8
-$sak 2.5/8, 1/4
-$tak 3/8
-$dom 4/8
-$tak 5/8
-$sak 5.5/8, 1/4
-$tak 6/8
-$sak 7/8, 1/4
-$sak 7.5/8, 1/2
 
-$sagat 0/4, 1/4
-$sagat 1/4, 1/4
-$sagat 2/4, 1/4
-$sagat 3/4, 1/4
+$sak .5, 1/2
 
-$claps 1/8, 1/4
-$claps 3/8, 1/4
-$claps 5/8, 1/4
-$claps 7/8, 1/4
+$tak .75
 
-chnset 0, "note/0"
-chnset 2.25, "note/1"
-chnset 2.25, "note/2"
-chnset 3, "note/3"
-chnset 3, "note/4"
-chnset 5, "note/5"
-chnset 7.25, "note/6"
-chnset 7.25, "note/7"
-chnset 8, "note/8"
-chnset 8, "note/9"
-chnset 11.25, "note/10"
-chnset 11.25, "note/11"
+$sak 1.25, 1/4
 
-chnset 0, "note/0"
-chnset 2, "note/1"
-chnset 2, "note/2"
-chnset 4, "note/3"
-chnset 4, "note/4"
-chnset 5, "note/5"
-chnset 7, "note/6"
-chnset 7, "note/7"
-chnset 9, "note/8"
-chnset 9, "note/9"
-chnset 11, "note/10"
-chnset 11, "note/11"
+$tak 1.5
+
+$dem 2
+
+$sak 2.25, 1/4
+
+$dem 2.5
+
+$tak 3
+
+$sak 3.5, 1/4
+$sak 3.75, 1/2
+
+$sagat 0, 1/4
+$sagat 1, 1/4
+$sagat 2, 1/4
+$sagat 3, 1/4
+
+$claps .5, 1/4
+$claps 1.5, 1/4
+$claps 2.5, 1/4
+$claps 3.5, 1/4
+
+#include "maqam.index"
+
+SMaqam chnget "maqam/1"
+
+schedule SMaqam, 0, 0

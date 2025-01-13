@@ -18,7 +18,7 @@ chnset 7, "note/4"
 ; 6: C#-50 12.5
 chnset 8.5, "note/5"
 
-7: D 14
+; 7: D 14
 chnset 10, "note/6"
 
 endin

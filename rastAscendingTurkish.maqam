@@ -12,7 +12,7 @@ chnset 4, "note/2"
 ; 4: G 7
 chnset 5, "note/3"
 
-5: A 9
+; 5: A 9
 chnset 7, "note/4"
 
 ; 6: B-25 10.75

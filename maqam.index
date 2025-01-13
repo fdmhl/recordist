@@ -1,0 +1,49 @@
+chnset 16, "maqam/count"
+
+#include "bayati.maqam"
+chnset "maqam_Bayati", "maqam/0"
+
+#include "faddys.maqam"
+chnset "maqam_Faddys", "maqam/1"
+
+#include "hijazAscendingTurkish.maqam"
+chnset "maqam_HijazAscendingTurkish", "maqam/2"
+
+#include "hijazDescendingTurkish.maqam"
+chnset "maqam_HijazDescendingTurkish", "maqam/3"
+
+#include "hijazModernArabic.maqam"
+chnset "maqam_HijazModernArabic", "maqam/4"
+
+#include "huseyniAscendingArabic.maqam"
+chnset "maqam_HuseyniAscendingArabic", "maqam/5"
+
+#include "huseyniAscendingTurkish.maqam"
+chnset "maqam_HuseyniAscendingTurkish", "maqam/6"
+
+#include "huseyniDescendingArabic.maqam"
+chnset "maqam_HuseyniDescendingArabic", "maqam/7"
+
+#include "huseyniDescendingTurkish.maqam"
+chnset "maqam_HuseyniDescendingTurkish", "maqam/8"
+
+#include "kurd.maqam"
+chnset "maqam_Kurd", "maqam/9"
+
+#include "nihavend.maqam"
+chnset "maqam_Nihavend", "maqam/10"
+
+#include "rastArabic.maqam"
+chnset "maqam_RastArabic", "maqam/11"
+
+#include "rastAscendingTurkish.maqam"
+chnset "maqam_RastAscendingTurkish", "maqam/12"
+
+#include "rastDescendingTurkish.maqam"
+chnset "maqam_RastDescendingTurkish", "maqam/13"
+
+#include "saba.maqam"
+chnset "maqam_Saba", "maqam/14"
+
+#include "sarga.maqam"
+chnset "maqam_Sarga", "maqam/15"
